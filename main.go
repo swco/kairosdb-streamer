@@ -21,7 +21,25 @@ func main() {
 	host := flag.String("host", "localhost:4242", "The host:port to connect to. Defaults to 'localhost:4242'")
 	flag.Parse()
 
-	dec := json.NewDecoder(os.Stdin)
+	inputFilename := flag.Arg(0)
+
+	var input io.Reader
+
+	if len(inputFilename) > 0 {
+		var err error
+
+		input, err = os.Open(inputFilename)
+
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+	} else {
+		input = os.Stdin
+	}
+
+	dec := json.NewDecoder(input)
 	conn, err := net.Dial("tcp", *host)
 
 	if err != nil {
