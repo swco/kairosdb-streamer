@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
-	"log"
+	"io"
 	"net"
 	"os"
 )
@@ -17,18 +18,24 @@ type Metric struct {
 }
 
 func main() {
-	dec := json.NewDecoder(os.Stdin)
+	host := flag.String("host", "localhost:4242", "The host:port to connect to. Defaults to 'localhost:4242'")
+	flag.Parse()
 
-	conn, err := net.Dial("tcp", "localhost:4243")
+	dec := json.NewDecoder(os.Stdin)
+	conn, err := net.Dial("tcp", *host)
 
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	for {
 		var m Metric
-		if err := dec.Decode(&m); err != nil {
-			log.Fatalln(err)
+		if err := dec.Decode(&m); err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		o := fmt.Sprintf("put %s %d %f", m.Name, m.Timestamp, m.Value)
