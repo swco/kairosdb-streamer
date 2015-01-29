@@ -44,7 +44,7 @@ func main() {
 			o += fmt.Sprintf(" %s=%s", name, value)
 		}
 
-		o += "\r"
+		o += "\n"
 
 		fmt.Fprint(conn, o)
 	}
