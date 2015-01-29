@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"os"
 )
 
@@ -17,11 +18,17 @@ type Metric struct {
 
 func main() {
 	dec := json.NewDecoder(os.Stdin)
+
+	conn, err := net.Dial("tcp", "localhost:4243")
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	for {
 		var m Metric
 		if err := dec.Decode(&m); err != nil {
-			log.Println(err)
-			return
+			log.Fatalln(err)
 		}
 
 		o := fmt.Sprintf("put %s %d %f", m.Name, m.Timestamp, m.Value)
@@ -30,8 +37,8 @@ func main() {
 			o += fmt.Sprintf(" %s=%s", name, value)
 		}
 
-		o += "\n"
+		o += "\r"
 
-		fmt.Print(o)
+		fmt.Fprint(conn, o)
 	}
 }
