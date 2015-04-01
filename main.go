@@ -67,7 +67,10 @@ func main() {
 		o := fmt.Sprintf("put %s %d %f", m.Name, m.Timestamp, m.Value)
 
 		for name, value := range m.Tags {
-			o += fmt.Sprintf(" %s=%s", name, value)
+			//empty tags will generate an error on ingest
+			if value != "" {
+				o += fmt.Sprintf(" %s=%s", name, value)
+			}
 		}
 
 		o += "\n"
