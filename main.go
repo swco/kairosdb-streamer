@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+const version = "0.0.2"
+
 // Metric holds the details of a metric
 type Metric struct {
 	Name      string            `json:"name"`
@@ -19,7 +21,13 @@ type Metric struct {
 
 func main() {
 	host := flag.String("host", "localhost:4242", "The host:port to connect to. Defaults to 'localhost:4242'")
+	ver := flag.Bool("version", false, "Print the version number and exit")
 	flag.Parse()
+
+	if *ver {
+		fmt.Printf("%v version: %s\n", os.Args[0], version)
+		os.Exit(0)
+	}
 
 	inputFilename := flag.Arg(0)
 
