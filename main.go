@@ -54,6 +54,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	defer conn.Close()
 
 	for {
 		var m Metric
