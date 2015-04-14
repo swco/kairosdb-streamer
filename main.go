@@ -62,7 +62,7 @@ func main() {
 			break
 		} else if err != nil {
 			fmt.Println(err)
-			os.Exit(1)
+			continue
 		}
 
 		o := fmt.Sprintf("put %s %d %f", m.Name, m.Timestamp, m.Value)
