@@ -26,7 +26,7 @@ func Send(conn net.Conn, m Metric) {
 
 	for name, value := range m.Tags {
 		//empty tags will generate an error on ingest
-		if value != "" {
+		if value != "" && name != "" {
 			fmt.Fprintf(conn, " %s=%s", name, value)
 		}
 	}
