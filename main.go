@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -39,7 +40,7 @@ func main() {
 		input, err = os.Open(inputFilename)
 
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
@@ -47,21 +48,19 @@ func main() {
 		input = os.Stdin
 	}
 
-	dec := json.NewDecoder(input)
+	scanner := bufio.NewScanner(input)
 	conn, err := net.Dial("tcp", *host)
-
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	defer conn.Close()
 
-	for {
+	for scanner.Scan() {
 		var m Metric
-		if err := dec.Decode(&m); err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Println(err)
+
+		if err := json.Unmarshal(scanner.Bytes(), &m); err != nil {
+			fmt.Fprintf(os.Stderr, "unable to decode line: %s: '%s'\n", err.Error(), scanner.Text())
 			continue
 		}
 
@@ -77,5 +76,10 @@ func main() {
 		o += "\n"
 
 		fmt.Fprint(conn, o)
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "error reading input:", err)
+		os.Exit(1)
 	}
 }
