@@ -20,6 +20,20 @@ type Metric struct {
 	Tags      map[string]string `json:"tags"`
 }
 
+// Send writes the metric m into conn in the format expected by kairosdb's tcp api
+func Send(conn net.Conn, m Metric) {
+	fmt.Fprintf(conn, "put %s %d %f", m.Name, m.Timestamp, m.Value)
+
+	for name, value := range m.Tags {
+		//empty tags will generate an error on ingest
+		if value != "" {
+			fmt.Fprintf(conn, " %s=%s", name, value)
+		}
+	}
+
+	fmt.Fprint(conn, "\n")
+}
+
 func main() {
 	host := flag.String("host", "localhost:4242", "The host:port to connect to. Defaults to 'localhost:4242'")
 	ver := flag.Bool("version", false, "Print the version number and exit")
@@ -64,16 +78,7 @@ func main() {
 			continue
 		}
 
-		fmt.Fprintf(conn, "put %s %d %f", m.Name, m.Timestamp, m.Value)
-
-		for name, value := range m.Tags {
-			//empty tags will generate an error on ingest
-			if value != "" {
-				fmt.Fprintf(conn, " %s=%s", name, value)
-			}
-		}
-
-		fmt.Fprint(conn, "\n")
+		Send(conn, m)
 	}
 
 	if err := scanner.Err(); err != nil {
