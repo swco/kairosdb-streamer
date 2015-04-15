@@ -64,18 +64,16 @@ func main() {
 			continue
 		}
 
-		o := fmt.Sprintf("put %s %d %f", m.Name, m.Timestamp, m.Value)
+		fmt.Fprintf(conn, "put %s %d %f", m.Name, m.Timestamp, m.Value)
 
 		for name, value := range m.Tags {
 			//empty tags will generate an error on ingest
 			if value != "" {
-				o += fmt.Sprintf(" %s=%s", name, value)
+				fmt.Fprintf(conn, " %s=%s", name, value)
 			}
 		}
 
-		o += "\n"
-
-		fmt.Fprint(conn, o)
+		fmt.Fprint(conn, "\n")
 	}
 
 	if err := scanner.Err(); err != nil {
