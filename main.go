@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-const version = "0.0.2"
+const version = "0.0.3"
 
 // Metric holds the details of a metric
 type Metric struct {
