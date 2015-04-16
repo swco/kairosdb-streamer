@@ -21,17 +21,17 @@ type Metric struct {
 }
 
 // Send writes the metric m into conn in the format expected by kairosdb's tcp api
-func Send(conn net.Conn, m Metric) {
-	fmt.Fprintf(conn, "put %s %d %f", m.Name, m.Timestamp, m.Value)
+func Send(w io.Writer, m Metric) {
+	fmt.Fprintf(w, "put %s %d %f", m.Name, m.Timestamp, m.Value)
 
 	for name, value := range m.Tags {
 		//empty tags will generate an error on ingest
 		if value != "" && name != "" {
-			fmt.Fprintf(conn, " %s=%s", name, value)
+			fmt.Fprintf(w, " %s=%s", name, value)
 		}
 	}
 
-	fmt.Fprint(conn, "\n")
+	fmt.Fprint(w, "\n")
 }
 
 func main() {
