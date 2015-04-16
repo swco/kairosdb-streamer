@@ -53,21 +53,21 @@ func main() {
 		os.Exit(0)
 	}
 
-	input, err := getInputReader(0)
+	in, err := getInputReader(0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer input.Close()
+	defer in.Close()
 
-	scanner := bufio.NewScanner(input)
-	conn, err := net.Dial("tcp", *host)
+	out, err := net.Dial("tcp", *host)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer conn.Close()
+	defer out.Close()
 
+	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		var m Metric
 
@@ -76,7 +76,7 @@ func main() {
 			continue
 		}
 
-		Send(conn, m)
+		Send(out, m)
 	}
 
 	if err := scanner.Err(); err != nil {
