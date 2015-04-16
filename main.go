@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 )
@@ -20,7 +21,54 @@ type Metric struct {
 	Tags      map[string]string `json:"tags"`
 }
 
+// send writes the metric m into conn in the format expected by kairosdb's tcp api
+func send(w io.Writer, m Metric) {
+	fmt.Fprintf(w, "put %s %d %f", m.Name, m.Timestamp, m.Value)
+
+	for name, value := range m.Tags {
+		//empty tags will generate an error on ingest
+		if value != "" && name != "" {
+			fmt.Fprintf(w, " %s=%s", name, value)
+		}
+	}
+
+	fmt.Fprint(w, "\n")
+}
+
+func valid(m Metric) bool {
+	return len(m.Name) != 0 && m.Timestamp != 0
+}
+
+// process reads metrics in json format from in and writes them to out in the
+// format needed by kairosdb's tcp api
+func process(in io.Reader, out io.Writer, errorLog *log.Logger) error {
+	scanner := bufio.NewScanner(in)
+	for scanner.Scan() {
+		var m Metric
+
+		if err := json.Unmarshal(scanner.Bytes(), &m); err != nil {
+			errorLog.Printf("unable to decode line: %s: '%s'\n", err.Error(), scanner.Text())
+			continue
+		}
+
+		if valid(m) {
+			send(out, m)
+		}
+	}
+	return scanner.Err()
+}
+
+// getInputReader opens a filename located at the argnum'th argument or so.Stdin if
+// the argument does not exist
+func getInputReader(argnum int) (io.ReadCloser, error) {
+	if flag.NArg() > argnum {
+		return os.Open(flag.Arg(argnum))
+	}
+	return os.Stdin, nil
+}
+
 func main() {
+	var errorLog = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime)
 	host := flag.String("host", "localhost:4242", "The host:port to connect to. Defaults to 'localhost:4242'")
 	ver := flag.Bool("version", false, "Print the version number and exit")
 	flag.Parse()
@@ -30,54 +78,22 @@ func main() {
 		os.Exit(0)
 	}
 
-	inputFilename := flag.Arg(0)
-
-	var input io.Reader
-
-	if len(inputFilename) > 0 {
-		var err error
-
-		input, err = os.Open(inputFilename)
-
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-
-	} else {
-		input = os.Stdin
-	}
-
-	scanner := bufio.NewScanner(input)
-	conn, err := net.Dial("tcp", *host)
+	in, err := getInputReader(0)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errorLog.Println(err)
 		os.Exit(1)
 	}
-	defer conn.Close()
+	defer in.Close()
 
-	for scanner.Scan() {
-		var m Metric
-
-		if err := json.Unmarshal(scanner.Bytes(), &m); err != nil {
-			fmt.Fprintf(os.Stderr, "unable to decode line: %s: '%s'\n", err.Error(), scanner.Text())
-			continue
-		}
-
-		fmt.Fprintf(conn, "put %s %d %f", m.Name, m.Timestamp, m.Value)
-
-		for name, value := range m.Tags {
-			//empty tags will generate an error on ingest
-			if value != "" {
-				fmt.Fprintf(conn, " %s=%s", name, value)
-			}
-		}
-
-		fmt.Fprint(conn, "\n")
+	out, err := net.Dial("tcp", *host)
+	if err != nil {
+		errorLog.Println(err)
+		os.Exit(1)
 	}
+	defer out.Close()
 
-	if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "error reading input:", err)
+	if err := process(in, out, errorLog); err != nil {
+		errorLog.Println("error reading input:", err)
 		os.Exit(1)
 	}
 }
