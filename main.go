@@ -34,6 +34,15 @@ func Send(w io.Writer, m Metric) {
 	fmt.Fprint(w, "\n")
 }
 
+// getInputReader opens a filename located at the argnum'th argument or so.Stdin if
+// the argument does not exist
+func getInputReader(argnum int) (io.ReadCloser, error) {
+	if flag.NArg() > argnum {
+		return os.Open(flag.Arg(argnum))
+	}
+	return os.Stdin, nil
+}
+
 func main() {
 	host := flag.String("host", "localhost:4242", "The host:port to connect to. Defaults to 'localhost:4242'")
 	ver := flag.Bool("version", false, "Print the version number and exit")
@@ -44,23 +53,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	inputFilename := flag.Arg(0)
-
-	var input io.Reader
-
-	if len(inputFilename) > 0 {
-		var err error
-
-		input, err = os.Open(inputFilename)
-
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-
-	} else {
-		input = os.Stdin
+	input, err := getInputReader(0)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
+	defer input.Close()
 
 	scanner := bufio.NewScanner(input)
 	conn, err := net.Dial("tcp", *host)
