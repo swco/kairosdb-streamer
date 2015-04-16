@@ -12,21 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func TestDecodeJSONToAPI(t *testing.T) {
-// 	inJSON := `{"timestamp":1429001359824,"name":"test1","value":5.0,"tags":{"tag1":"bar","tag2":"foo"}}
-// {"timestamp":1429001359824,"name":"test2","value":54}
-// {"timestamp":1429001359824,"name":"test1","value":5.0,"tags":{"tag1":"bar","tag2":"foo"}}`
-//
-// 	// maps have no order, so we must decode the actual output and compair it to these metrics
-// 	expected := []Metric{
-// 		Metric{"test1", 1429001359824, 5, map[string]string{"tag1": "bar", "tag2": "foo"}},
-// 		Metric{"test2", 1429001359824, 54, map[string]string{}},
-// 		Metric{"test3", 1429001359824, 1, map[string]string{"tag1": "bar"}},
-// 		Metric{"test4", 1429001359824, 5, map[string]string{"tag1": "bar"}},
-// 		Metric{"test5", 1429001359824, 5, map[string]string{"tag1": "baz"}},
-// 	}
-// }
-
 func runTest(t *testing.T, inJSON string, expected []Metric) {
 	in := strings.NewReader(inJSON)
 	out := &bytes.Buffer{}
