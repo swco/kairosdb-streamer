@@ -1,7 +1,7 @@
 # kairosdb-streamer
 [![Build Status](https://travis-ci.org/swco/kairosdb-streamer.svg)](https://travis-ci.org/swco/kairosdb-streamer)
 
-Takes messages from stdin and uploads them to kairosdb. This is designed to work with the fluentd exec plugin.
+Takes messages from stdin or a file and uploads them to kairosdb. This is designed to work with the fluentd exec plugin.
 
 # Installation
 ```bash
